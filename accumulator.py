@@ -20,9 +20,8 @@ class Accumulator:
     self.entries = []
     self.current_entry = self.new_entry()
 
-  @classmethod
-  def new_entry(cls, total=0):
-    return cls.Entry(total)
+  def new_entry(self, total=0):
+    return self.Entry(total)
 
   def gain_amount(self, amt):
     self.current_entry.gain_amount(amt)

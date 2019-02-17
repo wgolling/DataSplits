@@ -33,7 +33,6 @@ class TestAccumulator(unittest.TestCase):
     self.assertEqual(e1.total, 5)
 
 
-
 class TestListAccumulator(unittest.TestCase):
 
   def setUp(self):
@@ -70,4 +69,3 @@ class TestListAccumulator(unittest.TestCase):
     self.assertEqual(e1.gain, 0)
     self.assertEqual(e1.total, 5)
     assert(len(e1.list) == 0)
-
