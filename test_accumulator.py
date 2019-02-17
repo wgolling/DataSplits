@@ -1,13 +1,13 @@
 from accumulator import *
 import unittest
 
-# class TestAccumulator(unittest.TestCase):
+class TestAccumulator(unittest.TestCase):
 
-#   def test_constructor(self):
-#     pass
+  def test_constructor(self):
+    pass
 
 
-# class TestListAccumulator(unittest.TestCase):
+class TestListAccumulator(unittest.TestCase):
 
-#   def test_constructor(self):
-    # pass
+  def test_constructor(self):
+    pass
