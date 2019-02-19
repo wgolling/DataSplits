@@ -136,16 +136,12 @@ class AccumulatorManager:
 
   # Methods for adding accumulators.
 
-  def add_general_accumulator(self, **kwargs):
-    if not ({'compound_key', 'label'} <= kwargs.keys()):
-      # throw some exception
-      return
-    keys = self.parse_compound_key(kwargs['compound_key'])
+  def add_general_accumulator(self, compound_key, label, **kwargs):
+    keys = self.parse_compound_key(compound_key)
     cat_key = keys[0]
     acc_key = keys[1]
     if cat_key not in self.accumulator_categories:
       self.add_accumulator_category(cat_key, cat_key.title())
-    label = kwargs['label']
     if {'accumulators', 'accumulator_function'} <= kwargs.keys():
       acc = FunctionAccumulator(acc_key, label, kwargs['accumulators'], kwargs['accumulator_function'])
     elif 'accumulator_constructor' in kwargs:
@@ -157,23 +153,19 @@ class AccumulatorManager:
     return acc
 
   def add_accumulator(self, compound_key, label):
-    return self.add_general_accumulator(compound_key            =compound_key , \
-                                        label                   =label        , \
+    return self.add_general_accumulator(compound_key, label        , \
                                         accumulator_constructor =Accumulator)
 
   def add_list_accumulator(self, compound_key, label):
-    return self.add_general_accumulator(compound_key            =compound_key , \
-                                        label                   =label        , \
+    return self.add_general_accumulator(compound_key, label        , \
                                         accumulator_constructor =ListAccumulator)
 
   def add_current_accumulator(self, compound_key, label):
-    return self.add_general_accumulator(compound_key            =compound_key , \
-                                        label                   =label        , \
+    return self.add_general_accumulator(compound_key, label        , \
                                         accumulator_constructor =CurrentAccumulator)
 
   def add_function_accumulator(self, compound_key, label, accumulators, accumulator_function):
-    return self.add_general_accumulator(compound_key        =compound_key , \
-                                        label               =label        , \
+    return self.add_general_accumulator(compound_key, label        , \
                                         accumulators        =accumulators , \
                                         accumulator_function=accumulator_function)
 
