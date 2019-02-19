@@ -165,3 +165,61 @@ class TestFunctionAccumulator(unittest.TestCase):
     e1 = t.entries[1]
     self.assertEqual(e1.gain, 5)
     self.assertEqual(e1.total, 8)
+
+
+class TestAccumulatorManager(unittest.TestCase):
+
+  def setUp(self):
+    # Construct test instance
+    self.accumulator_manager = AccumulatorManager()
+    m = self.accumulator_manager
+    # add accumulators
+    m.add_accumulator_category('test', "Test Category")
+    acc = m.add_accumulator('test-test_1', "Test Accumulator")
+    m.add_accumulator('test-test_2', "Other Test Accumulator")
+    m.add_accumulator('other_test-test_1', "Accumulator in other category")
+    list_acc = m.add_list_accumulator('test-test_list', "List Accumulator")
+    curr_acc = m.add_current_accumulator('test-test_current', "Current Accumulator")
+    accs = [acc, list_acc, curr_acc]
+    def acc_function(acc_list):
+      val0 = acc_list[0].entries[-1].gain
+      val1 = acc_list[1].entries[-1].gain 
+      val2 = acc_list[2].entries[-1].gain 
+      return val2 - val0 - val1
+    m.add_function_accumulator('test-test_func', "Function Accumulator", accs, acc_function)
+
+  def test_add_accumulators(self):
+    m = self.accumulator_manager
+    cat_keys = m.accumulator_categories.keys()
+    assert(len(cat_keys) == 2)
+    assert('test' in cat_keys)
+    assert('other_test' in cat_keys)
+    test_cat = m.accumulator_categories['test']
+    assert(len(test_cat.accumulators) == 5)
+    other_cat = m.accumulator_categories['other_test']
+    assert(len(other_cat.accumulators) == 1)
+    acc = m.accumulator_categories['test'].accumulators['test_list']
+    self.assertEqual(acc.label, "List Accumulator")
+
+  def test_increment_accumulators(self):
+    m = self.accumulator_manager
+    cats = m.accumulator_categories
+    acc = cats['test'].accumulators['test_1']
+    list_acc = cats['test'].accumulators['test_list']
+    curr_acc = cats['test'].accumulators['test_current']
+    func_acc = cats['test'].accumulators['test_func']
+    m.gain_amount('test-test_1', 5)
+    m.gain_amount('test-test_list', 7)
+    m.set_current('test-test_current', 15)
+    self.assertEqual(acc.current_entry.gain, 5)
+    self.assertEqual(acc.current_entry.total, 0)
+    self.assertEqual(m.split_number, 0)
+    m.split()
+    self.assertEqual(m.split_number, 1)
+    self.assertEqual(acc.current_entry.gain, 0)
+    self.assertEqual(acc.current_entry.total, 5)
+    self.assertEqual(func_acc.entries[0].gain, 3)
+
+
+
+
