@@ -153,21 +153,17 @@ class AccumulatorManager:
     return acc
 
   def add_accumulator(self, compound_key, label):
-    return self.add_general_accumulator(compound_key, label        , \
-                                        accumulator_constructor =Accumulator)
+    return self.add_general_accumulator(compound_key, label, accumulator_constructor=Accumulator)
 
   def add_list_accumulator(self, compound_key, label):
-    return self.add_general_accumulator(compound_key, label        , \
-                                        accumulator_constructor =ListAccumulator)
+    return self.add_general_accumulator(compound_key, label, accumulator_constructor=ListAccumulator)
 
   def add_current_accumulator(self, compound_key, label):
-    return self.add_general_accumulator(compound_key, label        , \
-                                        accumulator_constructor =CurrentAccumulator)
+    return self.add_general_accumulator(compound_key, label, accumulator_constructor=CurrentAccumulator)
 
   def add_function_accumulator(self, compound_key, label, accumulators, accumulator_function):
-    return self.add_general_accumulator(compound_key, label        , \
-                                        accumulators        =accumulators , \
-                                        accumulator_function=accumulator_function)
+    return self.add_general_accumulator(compound_key, label,  accumulators=accumulators, \
+                                                              accumulator_function=accumulator_function)
 
 
   # Methods for incrementing accumulators.
