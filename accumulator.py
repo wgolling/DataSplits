@@ -23,18 +23,27 @@ class Accumulator:
   def new_entry(self, total=0):
     return self.Entry(total)
 
+  def gain_amount(self, amt):
+    self.current_entry.gain_amount(amt)
+
+  # Splitting methods.
+
+  def split(self):
+    self.finalize_data()
+    self.append_current_entry()
+
+  def finalize_data(self):
+    '''
+    Prepare the entry to be saved.
+    Overwrite in subclasses.
+    '''
+    c = self.current_entry
+    c.total += c.gain
+
   def append_current_entry(self):
     c = self.current_entry
     self.entries.append(c)
     self.current_entry = self.new_entry(c.total)
-
-  def gain_amount(self, amt):
-    self.current_entry.gain_amount(amt)
-
-  def split(self):
-    c = self.current_entry
-    c.total += c.gain
-    self.append_current_entry()
 
 
 class ListAccumulator(Accumulator):
@@ -59,11 +68,10 @@ class CurrentAccumulator(Accumulator):
   def set_current(self, amt):
     self.current_entry.total = amt
 
-  def split(self):
+  def finalize_data(self):
     last_current = 0 if not self.entries else self.entries[-1].total
     c = self.current_entry
     c.gain = c.total - last_current
-    self.append_current_entry()
 
 
 class FunctionAccumulator(Accumulator):
@@ -78,11 +86,10 @@ class FunctionAccumulator(Accumulator):
     self.accumulators = accumulators
     self.function = acc_function
 
-  def split(self):
+  def finalize_data(self):
     c = self.current_entry
     c.gain = self.function(self.accumulators)
     c.total += c.gain
-    self.append_current_entry()
 
 
 class AccumulatorManager:
@@ -129,56 +136,68 @@ class AccumulatorManager:
 
   # Methods for adding accumulators.
 
-  def add_general_accumulator(self, compound_key, label, accumulator_constructor):
-    keys = self.parse_compound_key(compound_key)
+  def add_general_accumulator(self, **kwargs):
+    if not ({'compound_key', 'label'} <= kwargs.keys()):
+      # throw some exception
+      return
+    keys = self.parse_compound_key(kwargs['compound_key'])
     cat_key = keys[0]
     acc_key = keys[1]
     if cat_key not in self.accumulator_categories:
       self.add_accumulator_category(cat_key, cat_key.title())
-    acc = accumulator_constructor(acc_key, label)
+    label = kwargs['label']
+    if {'accumulators', 'accumulator_function'} <= kwargs.keys():
+      acc = FunctionAccumulator(acc_key, label, kwargs['accumulators'], kwargs['accumulator_function'])
+    elif 'accumulator_constructor' in kwargs:
+      acc = kwargs['accumulator_constructor'](acc_key, label)
+    else:
+      # throw some exception
+      return
     self.accumulator_categories[cat_key].add_accumulator(acc)
     return acc
 
   def add_accumulator(self, compound_key, label):
-    return self.add_general_accumulator(compound_key, label, Accumulator)
+    return self.add_general_accumulator(compound_key            =compound_key , \
+                                        label                   =label        , \
+                                        accumulator_constructor =Accumulator)
 
   def add_list_accumulator(self, compound_key, label):
-    return self.add_general_accumulator(compound_key, label, ListAccumulator)
+    return self.add_general_accumulator(compound_key            =compound_key , \
+                                        label                   =label        , \
+                                        accumulator_constructor =ListAccumulator)
 
   def add_current_accumulator(self, compound_key, label):
-    return self.add_general_accumulator(compound_key, label, CurrentAccumulator)
+    return self.add_general_accumulator(compound_key            =compound_key , \
+                                        label                   =label        , \
+                                        accumulator_constructor =CurrentAccumulator)
 
   def add_function_accumulator(self, compound_key, label, accumulators, accumulator_function):
-    keys = self.parse_compound_key(compound_key)
-    cat_key = keys[0]
-    acc_key = keys[1]
-    if cat_key not in self.accumulator_categories:
-      self.add_accumulator_category(cat_key, cat_key.title())    
-    acc = FunctionAccumulator(acc_key, label, accumulators, accumulator_function)
-    self.accumulator_categories[cat_key].add_accumulator(acc)
-    return acc
+    return self.add_general_accumulator(compound_key        =compound_key , \
+                                        label               =label        , \
+                                        accumulators        =accumulators , \
+                                        accumulator_function=accumulator_function)
 
 
   # Methods for incrementing accumulators.
-  def validate_keys(self, keys):
-    return (keys[0] in self.accumulator_categories \
-            and keys[1] in self.accumulator_categories[keys[0]].accumulators)
+
+  def validate_compound_key(self, compound_key):
+    keys = self.parse_compound_key(compound_key)    
+    if not (keys[0] in self.accumulator_categories) \
+        or not (keys[1] in self.accumulator_categories[keys[0]].accumulators):
+      #throw exception
+      return False
+    else:
+      return keys
 
   def gain_amount(self, compound_key, amt):
-    keys = self.parse_compound_key(compound_key)
-    if not self.validate_keys(keys):
-      #throw exception
-      pass
+    keys = self.validate_compound_key(compound_key)
     cat_key = keys[0]
     acc_key = keys[1]
     acc = self.accumulator_categories[cat_key].accumulators[acc_key]
     acc.gain_amount(amt)
 
   def set_current(self, compound_key, amt):
-    keys = self.parse_compound_key(compound_key)
-    if not self.validate_keys(keys):
-      #throw exception
-      pass
+    keys = self.validate_compound_key(compound_key)
     cat_key = keys[0]
     acc_key = keys[1]
     acc = self.accumulator_categories[cat_key].accumulators[acc_key]
