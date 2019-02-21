@@ -117,13 +117,13 @@ class TestFunctionAccumulator(unittest.TestCase):
     self.acc      = Accumulator("acc", "Plain Accumulator")
     self.list_acc = ListAccumulator("list", "List Accumulator")
     self.curr_acc = CurrentAccumulator("curr", "Current Accumulator")
-    accs = [self.acc, self.list_acc, self.curr_acc]
-    def acc_function(acc_list):
-      val0 = acc_list[0].entries[-1].gain
-      val1 = acc_list[1].entries[-1].gain 
-      val2 = acc_list[2].entries[-1].gain 
+    acc_keys = {"acc" : self.acc, "list" : self.list_acc, "curr" : self.curr_acc}
+    def acc_function(value_dict):
+      val0 = value_dict["acc"]
+      val1 = value_dict["list"] 
+      val2 = value_dict["curr"] 
       return val2 - val0 - val1
-    self.test_instance = FunctionAccumulator("Test Key", "Test Label", accs, acc_function)
+    self.test_instance = FunctionAccumulator("Test Key", "Test Label", acc_keys, acc_function)
 
   def test_constructor(self):
     t = self.test_instance
@@ -180,13 +180,14 @@ class TestAccumulatorManager(unittest.TestCase):
     m.add_accumulator('other_test-test_1', "Accumulator in other category")
     list_acc = m.add_list_accumulator('test-test_list', "List Accumulator")
     curr_acc = m.add_current_accumulator('test-test_current', "Current Accumulator")
-    accs = [acc, list_acc, curr_acc]
-    def acc_function(acc_list):
-      val0 = acc_list[0].entries[-1].gain
-      val1 = acc_list[1].entries[-1].gain 
-      val2 = acc_list[2].entries[-1].gain 
+    #accs = [acc, list_acc, curr_acc]
+    acc_keys = {'test-test_1', 'test-test_list', 'test-test_current'}
+    def acc_function(acc_dict):
+      val0 = acc_dict['test-test_1']
+      val1 = acc_dict['test-test_list']
+      val2 = acc_dict['test-test_current'] 
       return val2 - val0 - val1
-    m.add_function_accumulator('test-test_func', "Function Accumulator", accs, acc_function)
+    m.add_function_accumulator('test-test_func', "Function Accumulator", acc_keys, acc_function)
 
   def test_add_accumulators(self):
     m = self.accumulator_manager
