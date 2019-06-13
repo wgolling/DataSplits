@@ -59,6 +59,19 @@ class ListAccumulator(Accumulator):
         super().gain_amount(amt)
         self.list.append(amt)
 
+
+class CharacterAccumulator(Accumulator):
+  '''
+  Like Accumulator but keeps tracj if character data.
+  Has a bool that indicates if they are in the party.
+  '''
+  def __init__(self, key, label):
+    super().__init__(key, label)
+    self.in_party = False
+
+  def add_to_party(self):
+    self.in_party = True
+
   
 class CurrentAccumulator(Accumulator):
   '''
@@ -91,6 +104,7 @@ class FunctionAccumulator(Accumulator):
     for key in accumulators:
       test_dict[key] = 0
     acc_function(test_dict)
+    # If everything's ok, set fields.
     self.accumulators = accumulators
     self.function = acc_function
 
@@ -125,6 +139,7 @@ class AccumulatorManager:
     def split(self):
       for key in self.accumulators:
         self.accumulators[key].split()
+
 
   def __init__(self):
     self.split_number = 0
@@ -169,6 +184,9 @@ class AccumulatorManager:
 
   def add_list_accumulator(self, compound_key, label):
     return self.add_general_accumulator(compound_key, label, accumulator_constructor=ListAccumulator)
+
+  def add_character_accumulator(self, compound_key, label):
+    return self.add_general_accumulator(compound_key, label, accumulator_constructor=CharacterAccumulator)
 
   def add_current_accumulator(self, compound_key, label):
     return self.add_general_accumulator(compound_key, label, accumulator_constructor=CurrentAccumulator)
