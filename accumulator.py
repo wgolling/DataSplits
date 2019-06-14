@@ -118,6 +118,23 @@ class FunctionAccumulator(Accumulator):
     c.total += c.gain
 
 
+class SumAccumulator(Accumulator):
+  def __init__(self, key, label, pos_accumulators, neg_accumulators):
+    super().__init__(key, label)
+    self.pos_accumulators = pos_accumulators
+    self.neg_accumulators = neg_accumulators
+
+  def finalize_data(self):
+    total_gain = 0
+    for acc in self.pos_accumulators:
+      total_gain += acc.entries[-1].gain
+    for acc in self.neg_accumulators:
+      total_gain -= acc.entries[-1].gain
+    c = self.current_entry
+    c.gain = total_gain
+    c.total += c.gain
+
+
 class AccumulatorManager:
   '''
   The controller class for the Accumulator model.
@@ -170,7 +187,17 @@ class AccumulatorManager:
     if cat_key not in self.accumulator_categories:
       self.add_accumulator_category(cat_key, cat_key.title())
     if {'accumulators', 'accumulator_function'} <= kwargs.keys():
-      acc = FunctionAccumulator(acc_key, label, kwargs['accumulators'], kwargs['accumulator_function'])
+      acc = FunctionAccumulator(
+        acc_key, 
+        label, 
+        kwargs['accumulators'], 
+        kwargs['accumulator_function'] )
+    elif {'pos_accumulator_keys', 'neg_accumulator_keys'} <= kwargs.keys():
+      acc = SumAccumulator(
+        acc_key, 
+        label, 
+        kwargs['pos_accumulator_keys'], 
+        kwargs['neg_accumulator_keys'] )
     elif 'accumulator_constructor' in kwargs:
       acc = kwargs['accumulator_constructor'](acc_key, label)
     else:
@@ -198,9 +225,18 @@ class AccumulatorManager:
       keys = self.validate_compound_key(key)
       acc = self.accumulator_categories[keys[0]].accumulators[keys[1]]
       acc_dict[key] = acc
-    return self.add_general_accumulator(compound_key, label,  accumulators=acc_dict, \
-                                                              accumulator_function=accumulator_function)
+    return self.add_general_accumulator(
+      compound_key, 
+      label,  
+      accumulators=acc_dict, 
+      accumulator_function=accumulator_function )
 
+  def add_sum_accumulator(self, compound_key, label, pos_accumulator_keys, neg_accumulator_keys):
+    return self.add_general_accumulator(
+      compound_key, 
+      label, 
+      pos_accumulator_keys=pos_accumulator_keys,
+      neg_accumulator_keys=neg_accumulator_keys )
 
   # Methods for incrementing accumulators.
 
