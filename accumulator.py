@@ -87,38 +87,43 @@ class CurrentAccumulator(Accumulator):
     c.gain = c.total - last_current
 
 
-class FunctionAccumulator(Accumulator):
-  '''
-  Like Accumulator except its value is determined from the values of other accumulators.
-  Try #1: 
-      - the constructor takes a list if accumulators and a lambda function to apply to those accumulators.
-      - it is assumed that all of the accumulators in the list get split before self.
-  Try #2:
-      - the constructor takes a set of keys, and a lambda function whose argument is a dict.
-      - it is assumed that the dict's key set agrees with accumulators, and its values are ints.
-  '''
-  def __init__(self, key, label, accumulators, acc_function):
-    super().__init__(key, label)
-    # Validate the function's signature.
-    test_dict = dict()
-    for key in accumulators:
-      test_dict[key] = 0
-    acc_function(test_dict)
-    # If everything's ok, set fields.
-    self.accumulators = accumulators
-    self.function = acc_function
+## Depricated class, but it was kind of cool so I kept it.
+# class FunctionAccumulator(Accumulator):
+#   '''
+#   Like Accumulator except its value is determined from the values of other accumulators.
+#   Try #1: 
+#       - the constructor takes a list if accumulators and a lambda function to apply to those accumulators.
+#       - it is assumed that all of the accumulators in the list get split before self.
+#   Try #2:
+#       - the constructor takes a set of keys, and a lambda function whose argument is a dict.
+#       - it is assumed that the dict's key set agrees with accumulators, and its values are ints.
+#   '''
+#   def __init__(self, key, label, accumulators, acc_function):
+#     super().__init__(key, label)
+#     # Validate the function's signature.
+#     test_dict = dict()
+#     for key in accumulators:
+#       test_dict[key] = 0
+#     acc_function(test_dict)
+#     # If everything's ok, set fields.
+#     self.accumulators = accumulators
+#     self.function = acc_function
 
-  def finalize_data(self):
-    # Convert dict of Accumulators to a dict of values.
-    input_dict = dict()
-    for key in self.accumulators:
-      input_dict[key] = self.accumulators[key].entries[-1].gain
-    c = self.current_entry
-    c.gain = self.function(input_dict)
-    c.total += c.gain
+#   def finalize_data(self):
+#     # Convert dict of Accumulators to a dict of values.
+#     input_dict = dict()
+#     for key in self.accumulators:
+#       input_dict[key] = self.accumulators[key].entries[-1].gain
+#     c = self.current_entry
+#     c.gain = self.function(input_dict)
+#     c.total += c.gain
 
 
 class SumAccumulator(Accumulator):
+  '''
+  Like Accumulator but forms a sum (with plus or minus coefficients) of other accumulators.
+  A SumAccumulator's gain value is computed upon split().
+  '''
   def __init__(self, key, label, pos_accumulators, neg_accumulators):
     super().__init__(key, label)
     self.pos_accumulators = pos_accumulators
@@ -218,25 +223,27 @@ class AccumulatorManager:
   def add_current_accumulator(self, compound_key, label):
     return self.add_general_accumulator(compound_key, label, accumulator_constructor=CurrentAccumulator)
 
-  def add_function_accumulator(self, compound_key, label, accumulator_keys, accumulator_function):
-    # Convert set of keys into dict of Accumulators to pass to FunctionAccumulator constructor.
-    acc_dict = dict()
-    for key in accumulator_keys:
-      keys = self.validate_compound_key(key)
-      acc = self.accumulator_categories[keys[0]].accumulators[keys[1]]
-      acc_dict[key] = acc
-    return self.add_general_accumulator(
-      compound_key, 
-      label,  
-      accumulators=acc_dict, 
-      accumulator_function=accumulator_function )
-
   def add_sum_accumulator(self, compound_key, label, pos_accumulator_keys, neg_accumulator_keys):
     return self.add_general_accumulator(
       compound_key, 
       label, 
       pos_accumulator_keys=pos_accumulator_keys,
       neg_accumulator_keys=neg_accumulator_keys )
+
+  ## Depricated function
+  # def add_function_accumulator(self, compound_key, label, accumulator_keys, accumulator_function):
+  #   # Convert set of keys into dict of Accumulators to pass to FunctionAccumulator constructor.
+  #   acc_dict = dict()
+  #   for key in accumulator_keys:
+  #     keys = self.validate_compound_key(key)
+  #     acc = self.accumulator_categories[keys[0]].accumulators[keys[1]]
+  #     acc_dict[key] = acc
+  #   return self.add_general_accumulator(
+  #     compound_key, 
+  #     label,  
+  #     accumulators=acc_dict, 
+  #     accumulator_function=accumulator_function )
+
 
   # Methods for incrementing accumulators.
 

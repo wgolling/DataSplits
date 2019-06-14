@@ -111,60 +111,60 @@ class TestCurrentAccumulator(unittest.TestCase):
     #e2 = t.current_entry
 
 
-class TestFunctionAccumulator(unittest.TestCase):
+# class TestFunctionAccumulator(unittest.TestCase):
 
-  def setUp(self):
-    self.acc      = Accumulator("acc", "Plain Accumulator")
-    self.list_acc = ListAccumulator("list", "List Accumulator")
-    self.curr_acc = CurrentAccumulator("curr", "Current Accumulator")
-    acc_keys = {"acc" : self.acc, "list" : self.list_acc, "curr" : self.curr_acc}
-    def acc_function(value_dict):
-      val0 = value_dict["acc"]
-      val1 = value_dict["list"] 
-      val2 = value_dict["curr"] 
-      return val2 - val0 - val1
-    self.test_instance = FunctionAccumulator("Test Key", "Test Label", acc_keys, acc_function)
+#   def setUp(self):
+#     self.acc      = Accumulator("acc", "Plain Accumulator")
+#     self.list_acc = ListAccumulator("list", "List Accumulator")
+#     self.curr_acc = CurrentAccumulator("curr", "Current Accumulator")
+#     acc_keys = {"acc" : self.acc, "list" : self.list_acc, "curr" : self.curr_acc}
+#     def acc_function(value_dict):
+#       val0 = value_dict["acc"]
+#       val1 = value_dict["list"] 
+#       val2 = value_dict["curr"] 
+#       return val2 - val0 - val1
+#     self.test_instance = FunctionAccumulator("Test Key", "Test Label", acc_keys, acc_function)
 
-  def test_constructor(self):
-    t = self.test_instance
-    self.assertEqual(t.key  , "Test Key")
-    self.assertEqual(t.label, "Test Label")
-    e = t.current_entry    
-    self.assertEqual(e.gain , 0)
-    self.assertEqual(e.total, 0)
+#   def test_constructor(self):
+#     t = self.test_instance
+#     self.assertEqual(t.key  , "Test Key")
+#     self.assertEqual(t.label, "Test Label")
+#     e = t.current_entry    
+#     self.assertEqual(e.gain , 0)
+#     self.assertEqual(e.total, 0)
 
-  def test_gain(self):
-    t = self.test_instance
-    t.gain_amount(5)
-    e = t.current_entry
-    self.assertEqual(e.gain, 5)
-    self.assertEqual(e.total, 0)
+#   def test_gain(self):
+#     t = self.test_instance
+#     t.gain_amount(5)
+#     e = t.current_entry
+#     self.assertEqual(e.gain, 5)
+#     self.assertEqual(e.total, 0)
 
-  def test_split(self):
-    t = self.test_instance
-    a = self.acc
-    l = self.list_acc
-    c = self.curr_acc
-    a.gain_amount(5)
-    a.split()
-    l.gain_amount(7)
-    l.split()
-    c.set_current(15)
-    c.split()
-    t.split()
-    a.gain_amount(2)
-    a.split()
-    l.gain_amount(3)
-    l.split()
-    c.set_current(25)
-    c.split()
-    t.split()
-    e0 = t.entries[0]
-    self.assertEqual(e0.gain, 3)
-    self.assertEqual(e0.total, 3)
-    e1 = t.entries[1]
-    self.assertEqual(e1.gain, 5)
-    self.assertEqual(e1.total, 8)
+#   def test_split(self):
+#     t = self.test_instance
+#     a = self.acc
+#     l = self.list_acc
+#     c = self.curr_acc
+#     a.gain_amount(5)
+#     a.split()
+#     l.gain_amount(7)
+#     l.split()
+#     c.set_current(15)
+#     c.split()
+#     t.split()
+#     a.gain_amount(2)
+#     a.split()
+#     l.gain_amount(3)
+#     l.split()
+#     c.set_current(25)
+#     c.split()
+#     t.split()
+#     e0 = t.entries[0]
+#     self.assertEqual(e0.gain, 3)
+#     self.assertEqual(e0.total, 3)
+#     e1 = t.entries[1]
+#     self.assertEqual(e1.gain, 5)
+#     self.assertEqual(e1.total, 8)
 
 
 class TestSumAccumulator(unittest.TestCase):
@@ -236,7 +236,7 @@ class TestAccumulatorManager(unittest.TestCase):
       val1 = acc_dict['test-test_list']
       val2 = acc_dict['test-test_current'] 
       return val2 - val0 - val1
-    m.add_function_accumulator('test-test_func', "Function Accumulator", acc_keys, acc_function)
+    # m.add_function_accumulator('test-test_func', "Function Accumulator", acc_keys, acc_function)
     m.add_sum_accumulator(
       'test-test_sum', 
       "Sum Accumulator", 
@@ -250,7 +250,7 @@ class TestAccumulatorManager(unittest.TestCase):
     assert('test' in cat_keys)
     assert('other_test' in cat_keys)
     test_cat = m.accumulator_categories['test']
-    assert(len(test_cat.accumulators) == 6)
+    assert(len(test_cat.accumulators) == 5)
     other_cat = m.accumulator_categories['other_test']
     assert(len(other_cat.accumulators) == 1)
     acc = m.accumulator_categories['test'].accumulators['test_list']
@@ -262,7 +262,7 @@ class TestAccumulatorManager(unittest.TestCase):
     acc = cats['test'].accumulators['test_1']
     list_acc = cats['test'].accumulators['test_list']
     curr_acc = cats['test'].accumulators['test_current']
-    func_acc = cats['test'].accumulators['test_func']
+    # func_acc = cats['test'].accumulators['test_func']
     sum_acc = cats['test'].accumulators['test_sum']
     m.gain_amount('test-test_1', 5)
     m.gain_amount('test-test_list', 7)
@@ -274,7 +274,7 @@ class TestAccumulatorManager(unittest.TestCase):
     self.assertEqual(m.split_number, 1)
     self.assertEqual(acc.current_entry.gain, 0)
     self.assertEqual(acc.current_entry.total, 5)
-    self.assertEqual(func_acc.entries[0].gain, 3)
+    # self.assertEqual(func_acc.entries[0].gain, 3)
     self.assertEqual(sum_acc.entries[0].gain, 3)
 
 

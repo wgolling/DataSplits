@@ -18,18 +18,20 @@ class BreathOfFire3Splits(AccumulatorManager):
       "zenny-encounters", 
       "Encounters", 
       [zenny_current, zenny_spends],
-      [zenny_pickups, zenny_bossdrops, zenny_sales] )
+      [zenny_pickups, zenny_bossdrops, zenny_sales] 
+    )
     # skill ink accumulators
     self.add_accumulator_category("skill_ink", "Skill Ink")
     sk_pickups  = self.add_accumulator("skill_ink-pickups",  "Pickups")
-    sk_uses     = self.add_accumulator("skill_ink-uses",     "Uses")
-    sk_buys     = self.add_accumulator("skill_ink-buys",     "Buys")
+    sk_uses     = self.add_accumulator("skill_ink-uses"   ,  "Uses")
+    sk_buys     = self.add_accumulator("skill_ink-buys"   ,  "Buys")
     ## add sum accumulator for current skill ink
     self.add_sum_accumulator(
       "skill_ink-current", 
       "Current", 
       [sk_pickups, sk_buys],
-      [sk_uses] )
+      [sk_uses] 
+    )
 
   # Interface functions.
 
