@@ -283,9 +283,9 @@ class TestAccumulatorManager(unittest.TestCase):
     m.gain_amount('test-test_list', 7)
     m.set_current('test-test_current', 15)
     m.split()
-    m.save()
+    m.save('data/test-splits')
 
-    new_m = AccumulatorManager.load()
+    new_m = AccumulatorManager.load('data/test-splits')
     self.assertEqual(new_m.split_number, 1)
     acc = new_m.get_accumulator('test-test_1')
     self.assertEqual(acc.current_entry.gain, 0)

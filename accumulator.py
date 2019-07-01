@@ -306,15 +306,15 @@ class AccumulatorManager:
 
 
   # Methods for saving and loading.
-  def save(self):
-    with open('data/test-splits', 'wb') as outfile:
+  def save(self, filename):
+    with open(filename, 'wb') as outfile:
       pickle.dump(self, outfile)
 
   @staticmethod
-  def load():
-    with open('data/test-splits', 'rb') as infile:
+  def load(filename):
+    with open(filename, 'rb') as infile:
       return pickle.load(infile)
 
 
 
-      
+
