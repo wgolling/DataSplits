@@ -1,4 +1,5 @@
 import pickle
+import os
 
 class Accumulator:
   '''
@@ -149,6 +150,10 @@ class AccumulatorManager:
   '''
   The controller class for the Accumulator model.
   '''
+  def __init__(self):
+    self.split_number = 0
+    self.accumulator_categories = dict()
+
   class AccumulatorCategory:
     def __init__(self, key, label):
       self.key = key
@@ -171,9 +176,6 @@ class AccumulatorManager:
         self.accumulators[key].split()
 
 
-  def __init__(self):
-    self.split_number = 0
-    self.accumulator_categories = dict()
 
   def add_accumulator_category(self, key, label):
     if key in self.accumulator_categories:
@@ -305,15 +307,27 @@ class AccumulatorManager:
     self.split_number += 1
 
 
-  # Methods for saving and loading.
-  def save(self, filename):
-    with open(filename, 'wb') as outfile:
-      pickle.dump(self, outfile)
+class SplitsLoader():
+  def __init__(self):
+    self.splits = None
+    self.splits_name = ""
 
-  @staticmethod
-  def load(filename):
+  def new_splits(self, name):
+    filename = "data/" + name
+    if os.path.isfile('./' + filename):
+      return #ERROR name already in use
+    self.splits = AccumulatorManager()
+    self.splits_name = name
+
+  def save_current_splits(self):
+    with open("data/" + self.splits_name, 'wb') as outfile:
+      pickle.dump(self.splits, outfile)
+
+  def load_splits(self, name):
+    filename = "data/" + name
     with open(filename, 'rb') as infile:
-      return pickle.load(infile)
+      self.splits = pickle.load(infile)
+      self.splits_name = name
 
 
 

@@ -277,23 +277,55 @@ class TestAccumulatorManager(unittest.TestCase):
     # self.assertEqual(func_acc.entries[0].gain, 3)
     self.assertEqual(sum_acc.entries[0].gain, 3)
 
+
+
+class TestSplitsLoader(unittest.TestCase):
+
+  def setUp(self):
+    self.sl = SplitsLoader()
+
+    self.new_splits = "temp-splits"
+    while os.path.isfile('./data/' + self.new_splits):
+      self.new_splits += 'a'
+
+
+  def test_new_splits(self):
+    with open("data/" + self.new_splits, "w") as file:
+        file.write("Dummy file.")
+    self.sl.new_splits(self.new_splits)
+    assert(self.sl.splits is None)
+    assert(self.sl.splits_name == "")
+
+    os.remove('./data/' + self.new_splits)
+    
+    self.sl.new_splits(self.new_splits)
+    assert(type(self.sl.splits) == AccumulatorManager)
+    assert(self.sl.splits_name == self.new_splits)
+
+
+  def test_save(self):
+    self.sl.new_splits(self.new_splits)
+    self.sl.save_current_splits()
+    assert(os.path.isfile('./data/' + self.new_splits))
+    os.remove('./data/' + self.new_splits)
+
+
   def test_save_and_load(self):
-    m = self.accumulator_manager
-    m.gain_amount('test-test_1', 5)
-    m.gain_amount('test-test_list', 7)
-    m.set_current('test-test_current', 15)
-    m.split()
-    m.save('data/test-splits')
-
-    new_m = AccumulatorManager.load('data/test-splits')
-    self.assertEqual(new_m.split_number, 1)
-    acc = new_m.get_accumulator('test-test_1')
-    self.assertEqual(acc.current_entry.gain, 0)
-    self.assertEqual(acc.current_entry.total, 5)
-
-  # def test_whatever(self):
-  #   assert(1==1)
-
+    try:
+        self.sl.load_splits(self.new_splits)
+    except FileNotFoundError:
+        pass
+    except Exception as e:
+       self.fail('Unexpected exception raised:', e)
+    else:
+       self.fail('ExpectedException not raised')
+    assert(self.sl.splits is None)
+    self.sl.new_splits(self.new_splits)
+    self.sl.save_current_splits()
+    fresh_splits_loader = SplitsLoader()
+    fresh_splits_loader.load_splits(self.new_splits)
+    assert(type(fresh_splits_loader.splits) == AccumulatorManager)
+    os.remove('./data/' + self.new_splits)
 
 
 
