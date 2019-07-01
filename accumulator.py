@@ -1,3 +1,5 @@
+import pickle
+
 class Accumulator:
   '''
   The Accumulator class accumulates numerical quantities.
@@ -62,7 +64,7 @@ class ListAccumulator(Accumulator):
 
 class CharacterAccumulator(Accumulator):
   '''
-  Like Accumulator but keeps tracj if character data.
+  Like Accumulator but keeps track of character data.
   Has a bool that indicates if they are in the party.
   '''
   def __init__(self, key, label):
@@ -71,6 +73,9 @@ class CharacterAccumulator(Accumulator):
 
   def add_to_party(self):
     self.in_party = True
+
+  def lose_from_part(self):
+    self.in_part = False
 
   
 class CurrentAccumulator(Accumulator):
@@ -158,6 +163,9 @@ class AccumulatorManager:
       else:
         self.accumulators[key] = accumulator
 
+    def get_accumulator(self, key):
+      return self.accumulators[key]
+
     def split(self):
       for key in self.accumulators:
         self.accumulators[key].split()
@@ -183,6 +191,15 @@ class AccumulatorManager:
     return keys
 
 
+  # Methods for getting accumulators.
+  # Throws KeyError
+  def get_accumulator(self, compound_key):
+    keys = self.parse_compound_key(compound_key)
+    cat_key = keys[0]
+    acc_key = keys[1]
+    return self.accumulator_categories[cat_key].get_accumulator(acc_key)
+    
+
   # Methods for adding accumulators.
 
   def add_general_accumulator(self, compound_key, label, **kwargs):
@@ -197,12 +214,12 @@ class AccumulatorManager:
         label, 
         kwargs['accumulators'], 
         kwargs['accumulator_function'] )
-    elif {'pos_accumulator_keys', 'neg_accumulator_keys'} <= kwargs.keys():
+    elif {'pos_accumulators', 'neg_accumulators'} <= kwargs.keys():
       acc = SumAccumulator(
         acc_key, 
         label, 
-        kwargs['pos_accumulator_keys'], 
-        kwargs['neg_accumulator_keys'] )
+        kwargs['pos_accumulators'], 
+        kwargs['neg_accumulators'] )
     elif 'accumulator_constructor' in kwargs:
       acc = kwargs['accumulator_constructor'](acc_key, label)
     else:
@@ -224,11 +241,19 @@ class AccumulatorManager:
     return self.add_general_accumulator(compound_key, label, accumulator_constructor=CurrentAccumulator)
 
   def add_sum_accumulator(self, compound_key, label, pos_accumulator_keys, neg_accumulator_keys):
+    # Turn keys into objects
+    pos_accumulators = list()
+    for key in pos_accumulator_keys:
+      pos_accumulators.append(self.get_accumulator(key))
+    neg_accumulators = list()
+    for key in neg_accumulator_keys:
+      neg_accumulators.append(self.get_accumulator(key))
+
     return self.add_general_accumulator(
       compound_key, 
       label, 
-      pos_accumulator_keys=pos_accumulator_keys,
-      neg_accumulator_keys=neg_accumulator_keys )
+      pos_accumulators=pos_accumulators,
+      neg_accumulators=neg_accumulators )
 
   ## Depricated function
   # def add_function_accumulator(self, compound_key, label, accumulator_keys, accumulator_function):
@@ -278,3 +303,18 @@ class AccumulatorManager:
     for cat_key in cats:
       cats[cat_key].split()
     self.split_number += 1
+
+
+  # Methods for saving and loading.
+  def save(self):
+    with open('data/test-splits', 'wb') as outfile:
+      pickle.dump(self, outfile)
+
+  @staticmethod
+  def load():
+    with open('data/test-splits', 'rb') as infile:
+      return pickle.load(infile)
+
+
+
+      

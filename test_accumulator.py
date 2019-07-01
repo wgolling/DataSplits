@@ -240,8 +240,8 @@ class TestAccumulatorManager(unittest.TestCase):
     m.add_sum_accumulator(
       'test-test_sum', 
       "Sum Accumulator", 
-      [curr_acc],
-      [acc, list_acc])
+      ['test-test_current'],
+      ['test-test_1', 'test-test_list'])
 
   def test_add_accumulators(self):
     m = self.accumulator_manager
@@ -276,6 +276,25 @@ class TestAccumulatorManager(unittest.TestCase):
     self.assertEqual(acc.current_entry.total, 5)
     # self.assertEqual(func_acc.entries[0].gain, 3)
     self.assertEqual(sum_acc.entries[0].gain, 3)
+
+  def test_save_and_load(self):
+    m = self.accumulator_manager
+    m.gain_amount('test-test_1', 5)
+    m.gain_amount('test-test_list', 7)
+    m.set_current('test-test_current', 15)
+    m.split()
+    m.save()
+
+    new_m = AccumulatorManager.load()
+    self.assertEqual(new_m.split_number, 1)
+    acc = new_m.get_accumulator('test-test_1')
+    self.assertEqual(acc.current_entry.gain, 0)
+    self.assertEqual(acc.current_entry.total, 5)
+
+  # def test_whatever(self):
+  #   assert(1==1)
+
+
 
 
 
