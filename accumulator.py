@@ -312,12 +312,16 @@ class SplitsLoader():
     self.splits = None
     self.splits_name = ""
 
-  def new_splits(self, name):
+  def new_splits(self, name, subclass=None):
     filename = "data/" + name
     if os.path.isfile('./' + filename):
       return #ERROR name already in use
-    self.splits = AccumulatorManager()
     self.splits_name = name
+    if subclass is None:
+      self.splits = AccumulatorManager()
+    else :
+      assert issubclass(subclass, AccumulatorManager)
+      self.splits = subclass()
 
   def save_current_splits(self):
     with open("data/" + self.splits_name, 'wb') as outfile:

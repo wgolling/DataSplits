@@ -1,4 +1,5 @@
 from accumulator import *
+from bof3_splits import *
 import unittest
 
 class TestAccumulator(unittest.TestCase):
@@ -311,20 +312,27 @@ class TestSplitsLoader(unittest.TestCase):
 
 
   def test_save_and_load(self):
-    try:
-        self.sl.load_splits(self.new_splits)
-    except FileNotFoundError:
-        pass
-    except Exception as e:
-       self.fail('Unexpected exception raised:', e)
-    else:
-       self.fail('ExpectedException not raised')
+    with self.assertRaises(FileNotFoundError):
+      self.sl.load_splits(self.new_splits)
     assert(self.sl.splits is None)
     self.sl.new_splits(self.new_splits)
     self.sl.save_current_splits()
     fresh_splits_loader = SplitsLoader()
     fresh_splits_loader.load_splits(self.new_splits)
     assert(type(fresh_splits_loader.splits) == AccumulatorManager)
+    os.remove('./data/' + self.new_splits)
+
+  def test_bad_constructor(self):
+    with self.assertRaises(AssertionError):
+      self.sl.new_splits(self.new_splits, SplitsLoader)
+
+  def test_bof3_splits(self):
+    self.sl.new_splits(self.new_splits, BreathOfFire3Splits)
+    assert(type(self.sl.splits) == BreathOfFire3Splits)
+    self.sl.save_current_splits()
+    fresh_splits_loader = SplitsLoader()
+    fresh_splits_loader.load_splits(self.new_splits)
+    assert(type(fresh_splits_loader.splits) == BreathOfFire3Splits)
     os.remove('./data/' + self.new_splits)
 
 
