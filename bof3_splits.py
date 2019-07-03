@@ -80,9 +80,9 @@ class BreathOfFire3Splits(AccumulatorManager):
   # Interface functions.
 
   ## Gaining and leveling up characters
-  def gain_char(self, char_key):
+  def gain_character(self, char_key):
     self.party[char_key] = True
-  def lose_char(self, char_key):
+  def lose_character(self, char_key):
     self.party[char_key] = False
 
   def level_up(self, char_key, amount=1):
