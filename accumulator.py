@@ -4,7 +4,7 @@ import os
 class Accumulator:
   '''
   The Accumulator class accumulates numerical quantities.
-  It keeps a list is Entry objects.
+  It keeps a list of Entry objects.
   '''
   class Entry:
     '''
@@ -28,6 +28,10 @@ class Accumulator:
 
   def gain_amount(self, amt):
     self.current_entry.gain_amount(amt)
+
+  def get_current_value(self):
+    c = self.current_entry
+    return c.total + c.gain
 
   # Splitting methods.
 
@@ -86,6 +90,9 @@ class CurrentAccumulator(Accumulator):
   '''
   def set_current(self, amt):
     self.current_entry.total = amt
+
+  def get_current(self):
+    return self.current_entry.total
 
   def finalize_data(self):
     last_current = 0 if not self.entries else self.entries[-1].total
