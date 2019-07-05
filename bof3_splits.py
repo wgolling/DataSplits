@@ -68,8 +68,10 @@ class BreathOfFire3Splits(AccumulatorManager):
     char_cat = Category.char
     self.add_accumulator_category(char_cat.name, char_cat.value)
     for char_key, character in Character.__members__.items():
-      self.add_character_accumulator(character.key(), character.value)
-      self.gain_amount(character.key(), starting_levels[character.name]) # initialize at starting level
+      self.add_character_accumulator(
+          character.key(), 
+          character.value, 
+          starting_level=starting_levels[character.name])
 
     # zenny accumulators
     zenny = Category.zenny
@@ -140,4 +142,64 @@ class BreathOfFire3Splits(AccumulatorManager):
     self.gain_amount(SkillInk.buys.key(), 1)
 
 
+  # Printing Functions
+  class PrintData():
+    def __init__(self, amt=0):
+      self.entries = list()
+      for i in range(0, amt):
+        self.entries.append(self.Entry(i))
 
+    def add_accumulator_data(self, acc, acc_type):
+      entries_amt = len(self.entries)
+      assert(entries_amt == len(acc.entries))
+      acc_key = acc.key
+      for i in range(0, entries_amt):
+        if (acc_type == "character"):
+          data_dict = self.entries[i].character_data
+        elif (acc_type == "zenny"):
+          data_dict = self.entries[i].zenny_data
+        elif (acc_type == "skill_ink"):
+          data_dict = self.entries[i].skill_ink_data
+        data_dict[acc_key] = dict()
+        data_dict[acc_key]['label'] = acc.label
+        data_dict[acc_key]['total'] = acc.entries[i].total
+        data_dict[acc_key]['gain']  = acc.entries[i].gain
+
+    def add_character_accumulator_data(self, acc):
+      self.add_accumulator_data(acc, "character")
+
+    def add_zenny_accumulator_data(self, acc):
+      self.add_accumulator_data(acc, "zenny")
+
+    def add_skill_ink_accumulator_data(self, acc):
+      self.add_accumulator_data(acc, 'skill_ink')
+
+    class Entry():
+      def __init__(self, name):
+        self.name = name
+        self.character_data = dict()
+        self.zenny_data     = dict()
+        self.skill_ink_data = dict()
+
+  def make_print_data(self):
+    data = self.PrintData(self.split_number)
+    data = self.add_character_data(data)
+    data = self.add_zenny_data(data)
+    data = self.add_skill_ink_data(data)
+    return data
+
+  def add_character_data(self, print_data):
+    for char_key, character in Character.__members__.items():
+      acc = self.get_accumulator(character.key())
+      print_data.add_character_accumulator_data(acc)
+    return print_data
+  def add_zenny_data(self, print_data):
+    for zenny_key, zenny_enum in Zenny.__members__.items():
+      acc = self.get_accumulator(zenny_enum.key())
+      print_data.add_zenny_accumulator_data(acc)
+    return print_data
+  def add_skill_ink_data(self, print_data):
+    for skill_ink_key, skill_ink_enum in SkillInk.__members__.items():
+      acc = self.get_accumulator(skill_ink_enum.key())
+      print_data.add_skill_ink_accumulator_data(acc)
+    return print_data

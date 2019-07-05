@@ -17,11 +17,11 @@ class Accumulator:
     def gain_amount(self, amt):
       self.gain += amt
 
-  def __init__(self, key, label):
+  def __init__(self, key, label, initial_value=0):
     self.key = key
     self.label = label
     self.entries = []
-    self.current_entry = self.new_entry()
+    self.current_entry = self.new_entry(initial_value)
 
   def new_entry(self, total=0):
     return self.Entry(total)
@@ -72,8 +72,8 @@ class CharacterAccumulator(Accumulator):
   Like Accumulator but keeps track of character data.
   Has a bool that indicates if they are in the party.
   '''
-  def __init__(self, key, label):
-    super().__init__(key, label)
+  def __init__(self, key, label, starting_level):
+    super().__init__(key, label, initial_value=starting_level)
     self.in_party = False
 
   def add_to_party(self):
@@ -137,8 +137,8 @@ class SumAccumulator(Accumulator):
   Like Accumulator but forms a sum (with plus or minus coefficients) of other accumulators.
   A SumAccumulator's gain value is computed upon split().
   '''
-  def __init__(self, key, label, pos_accumulators, neg_accumulators):
-    super().__init__(key, label)
+  def __init__(self, key, label, pos_accumulators, neg_accumulators, initial_value=0):
+    super().__init__(key, label, initial_value)
     self.pos_accumulators = pos_accumulators
     self.neg_accumulators = neg_accumulators
 
@@ -211,7 +211,11 @@ class AccumulatorManager:
 
   # Methods for adding accumulators.
 
-  def add_general_accumulator(self, compound_key, label, **kwargs):
+  def add_general_accumulator(self, 
+      compound_key, 
+      label, 
+      initial_value=0,
+      **kwargs):
     keys = self.parse_compound_key(compound_key)
     cat_key = keys[0]
     acc_key = keys[1]
@@ -228,9 +232,10 @@ class AccumulatorManager:
         acc_key, 
         label, 
         kwargs['pos_accumulators'], 
-        kwargs['neg_accumulators'] )
+        kwargs['neg_accumulators'],
+        initial_value )
     elif 'accumulator_constructor' in kwargs:
-      acc = kwargs['accumulator_constructor'](acc_key, label)
+      acc = kwargs['accumulator_constructor'](acc_key, label, initial_value)
     else:
       # throw some exception
       return
@@ -243,8 +248,12 @@ class AccumulatorManager:
   def add_list_accumulator(self, compound_key, label):
     return self.add_general_accumulator(compound_key, label, accumulator_constructor=ListAccumulator)
 
-  def add_character_accumulator(self, compound_key, label):
-    return self.add_general_accumulator(compound_key, label, accumulator_constructor=CharacterAccumulator)
+  def add_character_accumulator(self, compound_key, label, starting_level=0):
+    return self.add_general_accumulator(
+        compound_key, 
+        label, 
+        initial_value=starting_level, 
+        accumulator_constructor=CharacterAccumulator)
 
   def add_current_accumulator(self, compound_key, label):
     return self.add_general_accumulator(compound_key, label, accumulator_constructor=CurrentAccumulator)

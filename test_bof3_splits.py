@@ -118,5 +118,38 @@ class TestBreathOfFire3Splits(unittest.TestCase):
     sk_current = new_splits.get_accumulator('skill_ink-current')
     self.assertEqual(sk_current.current_entry.total, 1)
 
+  def test_print_data(self):
+    s = self.test_instance
+    ryu = s.get_accumulator('char-ryu')
+    s.level_up('ryu', 3)
+    s.pickup_zenny(40)
+    s.buy_skill_ink()
+    self.assertEqual(ryu.current_entry.gain, 3)
+    s.split()
+    s.level_up('ryu',2)
+    s.pickup_zenny(3)
+    s.buy_skill_ink()
+    s.buy_skill_ink()
+    s.split()
+    self.assertEqual(s.split_number, 2)
+    data = s.make_print_data()
+    self.assertEqual(len(data.entries), 2)
+    first_entry = data.entries[0]
+    self.assertEqual(first_entry.character_data['ryu']['label'], 'Ryu')
+    self.assertEqual(first_entry.character_data['ryu']['gain'], 3)
+    self.assertEqual(first_entry.character_data['ryu']['total'], 4)
+    self.assertEqual(first_entry.zenny_data['pickups']['gain'], 40)
+    self.assertEqual(first_entry.zenny_data['pickups']['total'], 40)
+    self.assertEqual(first_entry.skill_ink_data['buys']['gain'], 1)
+    self.assertEqual(first_entry.skill_ink_data['buys']['total'], 1)
+    second_entry = data.entries[1]
+    self.assertEqual(second_entry.character_data['ryu']['gain'], 2)
+    self.assertEqual(second_entry.character_data['ryu']['total'], 6)
+    self.assertEqual(second_entry.zenny_data['pickups']['gain'], 3)
+    self.assertEqual(second_entry.zenny_data['pickups']['total'], 43)
+    self.assertEqual(second_entry.skill_ink_data['buys']['gain'], 2)
+    self.assertEqual(second_entry.skill_ink_data['buys']['total'], 3)
+
+
 
 
