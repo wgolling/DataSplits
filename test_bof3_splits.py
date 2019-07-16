@@ -6,6 +6,9 @@ class TestBreathOfFire3Splits(unittest.TestCase):
 
   def setUp(self):
     self.test_instance = BreathOfFire3Splits()
+    self.new_splits = "temp-splits"
+    while os.path.isfile('./data/' + self.new_splits):
+      self.new_splits += 'a'
 
   def test_constructor(self):
     s = self.test_instance
@@ -87,10 +90,7 @@ class TestBreathOfFire3Splits(unittest.TestCase):
 
   def test_saving_and_loading(self):
     sl = SplitsLoader()
-    new_splits = "temp-splits"
-    while os.path.isfile('./data/' + new_splits):
-      new_splits += 'a'
-    sl.new_splits(new_splits, BreathOfFire3Splits)
+    sl.new_splits(self.new_splits, BreathOfFire3Splits)
     splits = sl.splits
     splits.level_up('ryu', 5)
     splits.level_up('garr', 2)
@@ -106,7 +106,7 @@ class TestBreathOfFire3Splits(unittest.TestCase):
     sl.save_current_splits()
 
     new_sl = SplitsLoader()
-    new_sl.load_splits(new_splits)
+    new_sl.load_splits(self.new_splits)
     new_splits = new_sl.splits
 
     ryu = new_splits.get_accumulator('char-ryu')
@@ -118,16 +118,23 @@ class TestBreathOfFire3Splits(unittest.TestCase):
     sk_current = new_splits.get_accumulator('skill_ink-current')
     self.assertEqual(sk_current.current_entry.total, 1)
 
+    os.remove('./data/' + self.new_splits)
+
+
   def test_print_data(self):
     s = self.test_instance
     ryu = s.get_accumulator('char-ryu')
     s.level_up('ryu', 3)
     s.pickup_zenny(40)
+    s.set_current_zenny(50)
     s.buy_skill_ink()
     self.assertEqual(ryu.current_entry.gain, 3)
-    s.split()
+    s.split("First Split")
     s.level_up('ryu',2)
+    s.gain_character('nina')
+    s.level_up('nina', 3)
     s.pickup_zenny(3)
+    s.set_current_zenny(60)
     s.buy_skill_ink()
     s.buy_skill_ink()
     s.split()
@@ -135,21 +142,85 @@ class TestBreathOfFire3Splits(unittest.TestCase):
     data = s.make_print_data()
     self.assertEqual(len(data.entries), 2)
     first_entry = data.entries[0]
+    self.assertEqual(first_entry.name, "First Split")
     self.assertEqual(first_entry.character_data['ryu']['label'], 'Ryu')
     self.assertEqual(first_entry.character_data['ryu']['gain'], 3)
     self.assertEqual(first_entry.character_data['ryu']['total'], 4)
     self.assertEqual(first_entry.zenny_data['pickups']['gain'], 40)
     self.assertEqual(first_entry.zenny_data['pickups']['total'], 40)
+    self.assertEqual(first_entry.zenny_data['encounters']['gain'], 10)
+    self.assertEqual(first_entry.zenny_data['encounters']['total'], 10)
     self.assertEqual(first_entry.skill_ink_data['buys']['gain'], 1)
     self.assertEqual(first_entry.skill_ink_data['buys']['total'], 1)
     second_entry = data.entries[1]
+    self.assertEqual(second_entry.name, "1")
     self.assertEqual(second_entry.character_data['ryu']['gain'], 2)
     self.assertEqual(second_entry.character_data['ryu']['total'], 6)
     self.assertEqual(second_entry.zenny_data['pickups']['gain'], 3)
     self.assertEqual(second_entry.zenny_data['pickups']['total'], 43)
+    self.assertEqual(second_entry.zenny_data['encounters']['gain'], 7)
+    self.assertEqual(second_entry.zenny_data['encounters']['total'], 17)
     self.assertEqual(second_entry.skill_ink_data['buys']['gain'], 2)
     self.assertEqual(second_entry.skill_ink_data['buys']['total'], 3)
 
+    print_string = s.print()
+    with open("data/print_test", 'w+') as outfile:
+      outfile.write(print_string)
 
+
+class TestCLI(unittest.TestCase):
+  def setUp(self):
+    self.cli = SplitsCLI()
+    self.sl = self.cli.splits_loader
+
+    self.new_splits = "temp-splits"
+    while os.path.isfile('./data/' + self.new_splits):
+      self.new_splits += 'a'
+
+
+  def test_new_splits(self):
+    with open("data/" + self.new_splits, "w") as file:
+        file.write("Dummy file.")
+    self.sl.new_splits(self.new_splits)
+    assert(self.sl.splits is None)
+    assert(self.sl.splits_name == "")
+
+    os.remove('./data/' + self.new_splits)
+    
+    self.sl.new_splits(self.new_splits)
+    assert(type(self.sl.splits) == AccumulatorManager)
+    assert(self.sl.splits_name == self.new_splits)
+
+
+  def test_save(self):
+    self.sl.new_splits(self.new_splits)
+    self.sl.save_current_splits()
+    assert(os.path.isfile('./data/' + self.new_splits))
+    os.remove('./data/' + self.new_splits)
+
+
+  def test_save_and_load(self):
+    with self.assertRaises(FileNotFoundError):
+      self.sl.load_splits(self.new_splits)
+    assert(self.sl.splits is None)
+    self.sl.new_splits(self.new_splits)
+    self.sl.save_current_splits()
+    fresh_splits_loader = SplitsLoader()
+    fresh_splits_loader.load_splits(self.new_splits)
+    assert(type(fresh_splits_loader.splits) == AccumulatorManager)
+    os.remove('./data/' + self.new_splits)
+
+  def test_bad_constructor(self):
+    with self.assertRaises(AssertionError):
+      self.sl.new_splits(self.new_splits, SplitsLoader)
+
+  def test_bof3_splits(self):
+    self.sl.new_splits(self.new_splits, BreathOfFire3Splits)
+    assert(type(self.sl.splits) == BreathOfFire3Splits)
+    self.sl.save_current_splits()
+    fresh_splits_loader = SplitsLoader()
+    fresh_splits_loader.load_splits(self.new_splits)
+    assert(type(fresh_splits_loader.splits) == BreathOfFire3Splits)
+    os.remove('./data/' + self.new_splits)
 
 

@@ -271,12 +271,14 @@ class TestAccumulatorManager(unittest.TestCase):
     self.assertEqual(acc.current_entry.gain, 5)
     self.assertEqual(acc.current_entry.total, 0)
     self.assertEqual(m.split_number, 0)
-    m.split()
+    m.split(name="Test Split")
     self.assertEqual(m.split_number, 1)
     self.assertEqual(acc.current_entry.gain, 0)
     self.assertEqual(acc.current_entry.total, 5)
     # self.assertEqual(func_acc.entries[0].gain, 3)
     self.assertEqual(sum_acc.entries[0].gain, 3)
+    m.split()
+    self.assertEqual(m.split_names, ["Test Split", "1"])
 
 
 

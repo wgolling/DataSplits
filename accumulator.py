@@ -72,6 +72,11 @@ class CharacterAccumulator(Accumulator):
   Like Accumulator but keeps track of character data.
   Has a bool that indicates if they are in the party.
   '''
+  class Entry(Accumulator.Entry):
+    def __init__(self, total):
+      super().__init__(total)
+      self.in_party = False
+
   def __init__(self, key, label, starting_level):
     super().__init__(key, label, initial_value=starting_level)
     self.in_party = False
@@ -79,8 +84,13 @@ class CharacterAccumulator(Accumulator):
   def add_to_party(self):
     self.in_party = True
 
-  def lose_from_part(self):
-    self.in_part = False
+  def lose_from_party(self):
+    self.in_party = False
+
+  def finalize_data(self):
+    super().finalize_data()
+    c = self.current_entry
+    c.in_party = self.in_party
 
   
 class CurrentAccumulator(Accumulator):
@@ -159,6 +169,7 @@ class AccumulatorManager:
   '''
   def __init__(self):
     self.split_number = 0
+    self.split_names = list()
     self.accumulator_categories = dict()
 
   class AccumulatorCategory:
@@ -316,10 +327,13 @@ class AccumulatorManager:
       pass
     acc.set_current(amt)
 
-  def split(self):
+  def split(self, name=None):
     cats = self.accumulator_categories
     for cat_key in cats:
       cats[cat_key].split()
+    if name is None:
+      name = str(self.split_number)
+    self.split_names.append(name)
     self.split_number += 1
 
 

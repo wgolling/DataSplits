@@ -1,6 +1,7 @@
 from accumulator import *
 from enum import Enum
 import itertools
+import os
 
 class Category(Enum):
   char      = "Character"
@@ -33,11 +34,11 @@ starting_levels = {
 
 class Zenny(Enum):
   pickups     = "Pickups"
-  bossdrops   = "Boss Drops"
-  spends      = "Expenditures"
-  sales       = "Sales"
-  current     = "Current"
   encounters  = "Encounters"
+  bossdrops   = "Boss Drops"
+  sales       = "Sales"
+  spends      = "Expenditures"
+  current     = "Current"
   
   def key(self):
     return compound_key(Category.zenny.name, self.name)
@@ -142,12 +143,49 @@ class BreathOfFire3Splits(AccumulatorManager):
     self.gain_amount(SkillInk.buys.key(), 1)
 
 
-  # Printing Functions
+  # Constructing data for printing
+
+  def make_print_data(self):
+    return self.PrintData.from_splits(self)
+
+  def print(self):
+    return BreathOfFire3SplitsPrinter.print(self.make_print_data())
+
   class PrintData():
-    def __init__(self, amt=0):
+    class Entry():
+      def __init__(self, name):
+        self.name = name
+        self.character_data = dict()
+        self.zenny_data     = dict()
+        self.skill_ink_data = dict()
+
+    def __init__(self, split_names):
       self.entries = list()
-      for i in range(0, amt):
-        self.entries.append(self.Entry(i))
+      for name in split_names:
+        self.entries.append(self.Entry(name))
+
+    @classmethod
+    def from_splits(cls, splits):
+      pd = cls(splits.split_names)
+      pd.add_character_data(splits)
+      pd.add_zenny_data(splits)
+      pd.add_skill_ink_data(splits)
+      return pd
+
+    def add_character_data(self, splits):
+      for char_key, character in Character.__members__.items():
+        if not splits.party[character.name]:
+          continue
+        acc = splits.get_accumulator(character.key())
+        self.add_character_accumulator_data(acc)
+    def add_zenny_data(self, splits):
+      for zenny_key, zenny_enum in Zenny.__members__.items():
+        acc = splits.get_accumulator(zenny_enum.key())
+        self.add_zenny_accumulator_data(acc)
+    def add_skill_ink_data(self, splits):
+      for skill_ink_key, skill_ink_enum in SkillInk.__members__.items():
+        acc = splits.get_accumulator(skill_ink_enum.key())
+        self.add_skill_ink_accumulator_data(acc)
 
     def add_accumulator_data(self, acc, acc_type):
       entries_amt = len(self.entries)
@@ -164,42 +202,93 @@ class BreathOfFire3Splits(AccumulatorManager):
         data_dict[acc_key]['label'] = acc.label
         data_dict[acc_key]['total'] = acc.entries[i].total
         data_dict[acc_key]['gain']  = acc.entries[i].gain
-
     def add_character_accumulator_data(self, acc):
       self.add_accumulator_data(acc, "character")
-
     def add_zenny_accumulator_data(self, acc):
       self.add_accumulator_data(acc, "zenny")
-
     def add_skill_ink_accumulator_data(self, acc):
       self.add_accumulator_data(acc, 'skill_ink')
 
-    class Entry():
-      def __init__(self, name):
-        self.name = name
-        self.character_data = dict()
-        self.zenny_data     = dict()
-        self.skill_ink_data = dict()
 
-  def make_print_data(self):
-    data = self.PrintData(self.split_number)
-    data = self.add_character_data(data)
-    data = self.add_zenny_data(data)
-    data = self.add_skill_ink_data(data)
-    return data
 
-  def add_character_data(self, print_data):
-    for char_key, character in Character.__members__.items():
-      acc = self.get_accumulator(character.key())
-      print_data.add_character_accumulator_data(acc)
-    return print_data
-  def add_zenny_data(self, print_data):
+class BreathOfFire3SplitsPrinter:
+  def print(print_data):
+    result = "Printing Accumulator Manager\n\n"
+    for entry in print_data.entries:
+      result += BreathOfFire3SplitsPrinter.print_entry(entry)
+      result += '\n'
+    return result
+
+  def print_entry(entry):
+    result = entry.name + "\n"
+    result += BreathOfFire3SplitsPrinter.print_character_data(entry.character_data) + '\n'
+    result += BreathOfFire3SplitsPrinter.print_zenny_data(entry.zenny_data) + '\n'
+    result += BreathOfFire3SplitsPrinter.print_skill_ink_data(entry.skill_ink_data) + '\n'
+    return result
+
+  def print_character_data(character_data):
+    result =  "Character Data\n"
+    for char_key, character in character_data.items():
+      result += character['label'] + ": "
+      result += str(character['total'])
+      result += " (+" + str(character['gain']) + ")"
+      result += "\n"
+    # for char_key, character in Character.__members__.items():
+    #   result += character_data[character.name]['label'] + ": "
+    #   result += str(character_data[character.name]['total'])
+    #   result += " (+" + str(character_data[character.name]['gain']) + ")"
+    #   result += "\n"
+    return result
+  def print_zenny_data(zenny_data):
+    result =  "Zenny Data\n"
     for zenny_key, zenny_enum in Zenny.__members__.items():
-      acc = self.get_accumulator(zenny_enum.key())
-      print_data.add_zenny_accumulator_data(acc)
-    return print_data
-  def add_skill_ink_data(self, print_data):
+      result += zenny_data[zenny_enum.name]['label'] + ": "
+      result += str(zenny_data[zenny_enum.name]['total'])
+      result += " (+" + str(zenny_data[zenny_enum.name]['gain']) + ")"
+      result += "\n"
+    return result
+  def print_skill_ink_data(skill_ink_data):
+    result = "Skill Ink Data\n"
     for skill_ink_key, skill_ink_enum in SkillInk.__members__.items():
-      acc = self.get_accumulator(skill_ink_enum.key())
-      print_data.add_skill_ink_accumulator_data(acc)
-    return print_data
+      result += skill_ink_data[skill_ink_enum.name]['label'] + ": "
+      result += str(skill_ink_data[skill_ink_enum.name]['total'])
+      result += " (+" + str(skill_ink_data[skill_ink_enum.name]['gain']) + ")"
+      result += "\n"
+    return result
+   
+
+class SplitsCLI:
+  def __init__(self):
+    self.splits_loader = SplitsLoader()
+    self.printer = BreathOfFire3SplitsPrinter()
+
+  # SplitsLoader interface
+  def new_splits(self, name):
+    self.splits_loader.new_splits(name, subclass=BreathOfFire3Splits)
+    # filename = "data/" + name
+    # if os.path.isfile('./' + filename):
+    #   return #ERROR name already in use
+    # self.splits_name = name
+    # if subclass is None:
+    #   self.splits = AccumulatorManager()
+    # else :
+    #   assert issubclass(subclass, AccumulatorManager)
+    #   self.splits = subclass()
+
+  def save_current_splits(self):
+    self.splits_loader.save_current_splits()
+    # with open("data/" + self.splits_name, 'wb') as outfile:
+    #   pickle.dump(self.splits, outfile)
+
+  def load_splits(self, name):
+    self.splits_loader.load_splits(name)
+
+  # Printing
+  def print(self):
+    return BreathOfFire3SplitsPrinter.print(self.splits_loader.splits.make_print_data())
+
+  def print_to_file(self):
+    with open("data/" + self.splits_loader.splits_name + "-readout", 'w+') as outfile:
+      outfile.write(self.print())
+
+
