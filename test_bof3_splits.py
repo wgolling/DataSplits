@@ -29,17 +29,20 @@ class TestBreathOfFire3Splits(unittest.TestCase):
 
     garr_level = s.get_character_level('garr')
     self.assertEqual(garr_level, 13)
-    assert(not s.party['garr'])
+    garr = s.get_accumulator(Character.garr.key())
+    assert(not garr.in_party)
 
 
   def test_gaining_and_losing_characters(self):
     s = self.test_instance
-    assert(s.party['ryu'])
-    assert(not s.party['garr'])
-    s.gain_character('garr')
-    s.lose_character('ryu')
-    assert(s.party['garr'])
-    assert(not s.party['ryu'])
+    ryu = s.get_accumulator(Character.ryu.key())
+    garr = s.get_accumulator(Character.garr.key())
+    assert(ryu.in_party)
+    assert(not garr.in_party)
+    s.gain_character(Character.garr)
+    s.lose_character(Character.ryu)
+    assert(not ryu.in_party)
+    assert(garr.in_party)
 
   def levelling_up_characters(self):
     s = self.test_instance
@@ -131,7 +134,7 @@ class TestBreathOfFire3Splits(unittest.TestCase):
     self.assertEqual(ryu.current_entry.gain, 3)
     s.split("First Split")
     s.level_up('ryu',2)
-    s.gain_character('nina')
+    s.gain_character(Character.nina)
     s.level_up('nina', 3)
     s.pickup_zenny(3)
     s.set_current_zenny(60)

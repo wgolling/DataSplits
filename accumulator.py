@@ -92,6 +92,9 @@ class CharacterAccumulator(Accumulator):
     c = self.current_entry
     c.in_party = self.in_party
 
+  def new_entry(self, total=0):
+    return CharacterAccumulator.Entry(total)
+
   
 class CurrentAccumulator(Accumulator):
   '''

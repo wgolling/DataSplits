@@ -60,11 +60,6 @@ class BreathOfFire3Splits(AccumulatorManager):
 
   def __init__(self):
     super().__init__()
-    # dictionary to keep track of the characters in your party
-    self.party = dict()
-    for char_key, character in Character.__members__.items():
-      self.party[char_key] = False
-    self.party[Character.ryu.name] = True
     # character accumulators
     char_cat = Category.char
     self.add_accumulator_category(char_cat.name, char_cat.value)
@@ -73,6 +68,8 @@ class BreathOfFire3Splits(AccumulatorManager):
           character.key(), 
           character.value, 
           starting_level=starting_levels[character.name])
+    ryu = self.get_accumulator(Character.ryu.key())
+    ryu.add_to_party()
 
     # zenny accumulators
     zenny = Category.zenny
@@ -107,10 +104,10 @@ class BreathOfFire3Splits(AccumulatorManager):
   # Interface functions.
 
   ## Gaining and leveling up characters
-  def gain_character(self, char_key):
-    self.party[char_key] = True
-  def lose_character(self, char_key):
-    self.party[char_key] = False
+  def gain_character(self, char_enum):
+    self.get_accumulator(char_enum.key()).add_to_party()
+  def lose_character(self, char_enum):
+    self.get_accumulator(char_enum.key()).lose_from_party()
 
   def level_up(self, char_key, amount=1):
     self.gain_amount(Character[char_key].key(), amount)
@@ -174,8 +171,6 @@ class BreathOfFire3Splits(AccumulatorManager):
 
     def add_character_data(self, splits):
       for char_key, character in Character.__members__.items():
-        if not splits.party[character.name]:
-          continue
         acc = splits.get_accumulator(character.key())
         self.add_character_accumulator_data(acc)
     def add_zenny_data(self, splits):
@@ -193,6 +188,9 @@ class BreathOfFire3Splits(AccumulatorManager):
       acc_key = acc.key
       for i in range(0, entries_amt):
         if (acc_type == "character"):
+          assert(isinstance(acc.entries[i], CharacterAccumulator.Entry))
+          if not acc.entries[i].in_party:
+            continue
           data_dict = self.entries[i].character_data
         elif (acc_type == "zenny"):
           data_dict = self.entries[i].zenny_data
