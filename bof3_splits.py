@@ -200,6 +200,8 @@ class BreathOfFire3Splits(AccumulatorManager):
         data_dict[acc_key]['label'] = acc.label
         data_dict[acc_key]['total'] = acc.entries[i].total
         data_dict[acc_key]['gain']  = acc.entries[i].gain
+        if isinstance(acc, ListAccumulator):
+          data_dict[acc_key]['list'] = acc.entries[i].list
     def add_character_accumulator_data(self, acc):
       self.add_accumulator_data(acc, "character")
     def add_zenny_accumulator_data(self, acc):
@@ -231,26 +233,24 @@ class BreathOfFire3SplitsPrinter:
       result += str(character['total'])
       result += " (+" + str(character['gain']) + ")"
       result += "\n"
-    # for char_key, character in Character.__members__.items():
-    #   result += character_data[character.name]['label'] + ": "
-    #   result += str(character_data[character.name]['total'])
-    #   result += " (+" + str(character_data[character.name]['gain']) + ")"
-    #   result += "\n"
     return result
   def print_zenny_data(zenny_data):
     result =  "Zenny Data\n"
-    for zenny_key, zenny_enum in Zenny.__members__.items():
-      result += zenny_data[zenny_enum.name]['label'] + ": "
-      result += str(zenny_data[zenny_enum.name]['total'])
-      result += " (+" + str(zenny_data[zenny_enum.name]['gain']) + ")"
+    for zenny_key, zenny_acc in zenny_data.items():
+      result += zenny_acc['label'] + ": "
+      if 'list' in zenny_acc:
+        result += ", ".join(map(str, zenny_acc['list']))
+      result += " (+" + str(zenny_acc['gain']) + " / " + str(zenny_acc['total']) + ")"
       result += "\n"
     return result
+  def print_list(list_var):
+    pass 
   def print_skill_ink_data(skill_ink_data):
     result = "Skill Ink Data\n"
-    for skill_ink_key, skill_ink_enum in SkillInk.__members__.items():
-      result += skill_ink_data[skill_ink_enum.name]['label'] + ": "
-      result += str(skill_ink_data[skill_ink_enum.name]['total'])
-      result += " (+" + str(skill_ink_data[skill_ink_enum.name]['gain']) + ")"
+    for skill_ink_key, skill_ink_acc in skill_ink_data.items():
+      result += skill_ink_acc['label'] + ": "
+      result += str(skill_ink_acc['total'])
+      result += " (+" + str(skill_ink_acc['gain']) + ")"
       result += "\n"
     return result
    
@@ -263,20 +263,9 @@ class SplitsCLI:
   # SplitsLoader interface
   def new_splits(self, name):
     self.splits_loader.new_splits(name, subclass=BreathOfFire3Splits)
-    # filename = "data/" + name
-    # if os.path.isfile('./' + filename):
-    #   return #ERROR name already in use
-    # self.splits_name = name
-    # if subclass is None:
-    #   self.splits = AccumulatorManager()
-    # else :
-    #   assert issubclass(subclass, AccumulatorManager)
-    #   self.splits = subclass()
 
   def save_current_splits(self):
     self.splits_loader.save_current_splits()
-    # with open("data/" + self.splits_name, 'wb') as outfile:
-    #   pickle.dump(self.splits, outfile)
 
   def load_splits(self, name):
     self.splits_loader.load_splits(name)
